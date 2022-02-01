@@ -1,5 +1,6 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.5)
 project(lms1xx)
+find_package(ament_cmake REQUIRED)
 
 # Build ROS-independent library.
 find_package(console_bridge REQUIRED)
@@ -23,7 +24,8 @@ install(TARGETS LMS1xx LMS1xx_node
 )
 
 install(DIRECTORY meshes launch urdf
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
+  DESTINATION share/${PROJECT_NAME}
+)
 
 install(PROGRAMS scripts/find_sick scripts/set_sick_ip
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
