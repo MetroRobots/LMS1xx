@@ -12,13 +12,13 @@
 
   <buildtool_depend>ament_cmake</buildtool_depend>
   <depend>rclcpp</depend>
-  <depend>rosconsole_bridge</depend>
-  <depend>roscpp_serialization</depend>
+  <!--depend>rosconsole_bridge</depend>
+  <depend>roscpp_serialization</depend-->
   <depend>sensor_msgs</depend>
 
-  <test_depend>roslaunch</test_depend>
+  <!--test_depend>roslaunch</test_depend>
   <test_depend>roslint</test_depend>
-  <test_depend>rosunit</test_depend>
+  <test_depend>rosunit</test_depend-->
   <export>
     <build_type>ament_cmake</build_type>
   </export>

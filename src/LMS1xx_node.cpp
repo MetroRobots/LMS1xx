@@ -24,8 +24,8 @@
 #include <csignal>
 #include <cstdio>
 #include <LMS1xx/LMS1xx.h>
-#include "ros/ros.h"
-#include "sensor_msgs/LaserScan.h"
+#include <rclcpp/rclcpp.hpp>
+#include <sensor_msgs/msg/laser_scan.hpp>
 #include <limits>
 #include <string>
 
@@ -38,7 +38,7 @@ int main(int argc, char **argv)
   scanCfg cfg;
   scanOutputRange outputRange;
   scanDataCfg dataCfg;
-  sensor_msgs::LaserScan scan_msg;
+  sensor_msgs::msg::LaserScan scan_msg;
 
   // parameters
   std::string host;
@@ -46,28 +46,28 @@ int main(int argc, char **argv)
   bool inf_range;
   int port;
 
-  ros::init(argc, argv, "lms1xx");
-  ros::NodeHandle nh;
-  ros::NodeHandle n("~");
-  ros::Publisher scan_pub = nh.advertise<sensor_msgs::LaserScan>("scan", 1);
+  rclcpp::init(argc, argv);
+  auto nh = rclcpp::Node::make_shared("lms1xx");
+  rclcpp::Node n("~");
+  auto scan_pub = nh.create_publisher<sensor_msgs::msg::LaserScan>("scan");
 
   n.param<std::string>("host", host, "192.168.1.2");
   n.param<std::string>("frame_id", frame_id, "laser");
   n.param<bool>("publish_min_range_as_inf", inf_range, false);
   n.param<int>("port", port, 2111);
 
-  while (ros::ok())
+  while (rclcpp::ok())
   {
     ROS_INFO_STREAM("Connecting to laser at " << host);
     laser.connect(host, port);
     if (!laser.isConnected())
     {
-      ROS_WARN("Unable to connect, retrying.");
-      ros::Duration(1).sleep();
+      RCLCPP_WARN(rclcpp::get_logger("Lms1Xx"), "Unable to connect, retrying.");
+      rclcpp::Duration(1).sleep();
       continue;
     }
 
-    ROS_DEBUG("Logging in to laser.");
+    RCLCPP_DEBUG(rclcpp::get_logger("Lms1Xx"), "Logging in to laser.");
     laser.login();
     cfg = laser.getScanCfg();
     outputRange = laser.getScanOutputRange();
@@ -75,16 +75,16 @@ int main(int argc, char **argv)
     if (cfg.scaningFrequency != 5000)
     {
       laser.disconnect();
-      ROS_WARN("Unable to get laser output range. Retrying.");
-      ros::Duration(1).sleep();
+      RCLCPP_WARN(rclcpp::get_logger("Lms1Xx"), "Unable to get laser output range. Retrying.");
+      rclcpp::Duration(1).sleep();
       continue;
     }
 
-    ROS_INFO("Connected to laser.");
+    RCLCPP_INFO(rclcpp::get_logger("Lms1Xx"), "Connected to laser.");
 
-    ROS_DEBUG("Laser configuration: scaningFrequency %d, angleResolution %d, startAngle %d, stopAngle %d",
+    RCLCPP_DEBUG(rclcpp::get_logger("Lms1Xx"), "Laser configuration: scaningFrequency %d, angleResolution %d, startAngle %d, stopAngle %d",
               cfg.scaningFrequency, cfg.angleResolution, cfg.startAngle, cfg.stopAngle);
-    ROS_DEBUG("Laser output range:angleResolution %d, startAngle %d, stopAngle %d",
+    RCLCPP_DEBUG(rclcpp::get_logger("Lms1Xx"), "Laser output range:angleResolution %d, startAngle %d, stopAngle %d",
               outputRange.angleResolution, outputRange.startAngle, outputRange.stopAngle);
 
     scan_msg.header.frame_id = frame_id;
@@ -123,61 +123,61 @@ int main(int argc, char **argv)
     dataCfg.deviceName = false;
     dataCfg.outputInterval = 1;
 
-    ROS_DEBUG("Setting scan data configuration.");
+    RCLCPP_DEBUG(rclcpp::get_logger("Lms1Xx"), "Setting scan data configuration.");
     laser.setScanDataCfg(dataCfg);
 
-    ROS_DEBUG("Starting measurements.");
+    RCLCPP_DEBUG(rclcpp::get_logger("Lms1Xx"), "Starting measurements.");
     laser.startMeas();
 
-    ROS_DEBUG("Waiting for ready status.");
-    ros::Time ready_status_timeout = ros::Time::now() + ros::Duration(5);
+    RCLCPP_DEBUG(rclcpp::get_logger("Lms1Xx"), "Waiting for ready status.");
+    rclcpp::Time ready_status_timeout = rclcpp::Time::now() + rclcpp::Duration(5);
 
     // while(1)
     // {
     status_t stat = laser.queryStatus();
-    ros::Duration(1.0).sleep();
+    rclcpp::Duration(1.0).sleep();
     if (stat != ready_for_measurement)
     {
-      ROS_WARN("Laser not ready. Retrying initialization.");
+      RCLCPP_WARN(rclcpp::get_logger("Lms1Xx"), "Laser not ready. Retrying initialization.");
       laser.disconnect();
-      ros::Duration(1).sleep();
+      rclcpp::Duration(1).sleep();
       continue;
     }
     /*if (stat == ready_for_measurement)
     {
-      ROS_DEBUG("Ready status achieved.");
+      RCLCPP_DEBUG(rclcpp::get_logger("Lms1Xx"), "Ready status achieved.");
       break;
     }
 
-      if (ros::Time::now() > ready_status_timeout)
+      if (rclcpp::Time::now() > ready_status_timeout)
       {
-        ROS_WARN("Timed out waiting for ready status. Trying again.");
+        RCLCPP_WARN(rclcpp::get_logger("Lms1Xx"), "Timed out waiting for ready status. Trying again.");
         laser.disconnect();
         continue;
       }
 
-      if (!ros::ok())
+      if (!rclcpp::ok())
       {
         laser.disconnect();
         return 1;
       }
     }*/
 
-    ROS_DEBUG("Starting device.");
+    RCLCPP_DEBUG(rclcpp::get_logger("Lms1Xx"), "Starting device.");
     laser.startDevice();  // Log out to properly re-enable system after config
 
-    ROS_DEBUG("Commanding continuous measurements.");
+    RCLCPP_DEBUG(rclcpp::get_logger("Lms1Xx"), "Commanding continuous measurements.");
     laser.scanContinous(1);
 
-    while (ros::ok())
+    while (rclcpp::ok())
     {
-      ros::Time start = ros::Time::now();
+      rclcpp::Time start = rclcpp::Time::now();
 
       scan_msg.header.stamp = start;
       ++scan_msg.header.seq;
 
       scanData data;
-      ROS_DEBUG("Reading scan data.");
+      RCLCPP_DEBUG(rclcpp::get_logger("Lms1Xx"), "Reading scan data.");
       if (laser.getScanData(&data))
       {
         for (int i = 0; i < data.dist_len1; i++)
@@ -199,16 +199,16 @@ int main(int argc, char **argv)
           scan_msg.intensities[i] = data.rssi1[i];
         }
 
-        ROS_DEBUG("Publishing scan data.");
+        RCLCPP_DEBUG(rclcpp::get_logger("Lms1Xx"), "Publishing scan data.");
         scan_pub.publish(scan_msg);
       }
       else
       {
-        ROS_ERROR("Laser timed out on delivering scan, attempting to reinitialize.");
+        RCLCPP_ERROR(rclcpp::get_logger("Lms1Xx"), "Laser timed out on delivering scan, attempting to reinitialize.");
         break;
       }
 
-      ros::spinOnce();
+      rclcpp::spin_some(node);
     }
 
     laser.scanContinous(0);

@@ -3,42 +3,44 @@ project(lms1xx)
 find_package(ament_cmake REQUIRED)
 
 # Build ROS-independent library.
-find_package(console_bridge REQUIRED)
-include_directories(include ${console_bridge_INCLUDE_DIRS})
-add_library(LMS1xx src/LMS1xx.cpp)
-target_link_libraries(LMS1xx ${console_bridge_LIBRARIES})
+# find_package(console_bridge REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(sensor_msgs REQUIRED)
+# include_directories(include ${console_bridge_INCLUDE_DIRS})
 
-# Regular catkin package follows.
-find_package(catkin REQUIRED COMPONENTS roscpp sensor_msgs)
-catkin_package(CATKIN_DEPENDS roscpp)
+# ROS Dependent
 
-include_directories(include ${catkin_INCLUDE_DIRS})
-add_executable(LMS1xx_node src/LMS1xx_node.cpp)
-target_link_libraries(LMS1xx_node LMS1xx ${catkin_LIBRARIES})
+# include_directories(include)
+# add_library(LMS1xx src/LMS1xx.cpp)
+# ament_target_dependencies(LMS1xx ${console_bridge_LIBRARIES})
+# add_executable(LMS1xx_node src/LMS1xx_node.cpp)
+# ament_target_dependencies(LMS1xx_node LMS1xx "launch" "sensor_msgs" "launch_ros")
 
-
-install(TARGETS LMS1xx LMS1xx_node
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
+# install(TARGETS LMS1xx LMS1xx_node
+#  ARCHIVE DESTINATION lib
+#  LIBRARY DESTINATION lib
+#  RUNTIME DESTINATION lib/${PROJECT_NAME}
+#)
 
 install(DIRECTORY meshes launch urdf
   DESTINATION share/${PROJECT_NAME}
 )
 
-install(PROGRAMS scripts/find_sick scripts/set_sick_ip
-  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+#install(PROGRAMS scripts/find_sick scripts/set_sick_ip
+#   DESTINATION lib/${PROJECT_NAME}
+#)
 
-if (CATKIN_ENABLE_TESTING)
-  catkin_add_gtest(test_buffer test/test_buffer.cpp)
-  target_link_libraries(test_buffer ${catkin_LIBRARIES})
+#ament_export_dependencies(rclcpp)
 
-  find_package(roslint REQUIRED)
-  roslint_cpp()
+if (BUILD_TESTING)
   #roslint_add_test()
 
-  find_package(roslaunch REQUIRED)
-  roslaunch_add_file_check(launch/LMS1xx.launch)
-endif()
+  # find_package(roslaunch REQUIRED)
 
+  # find_package(roslint REQUIRED)
+  # target_link_libraries(test_buffer ${catkin_LIBRARIES})
+  # roslint_cpp()
+  # ament_add_gtest(test_buffer test/test_buffer.cpp)
+  # roslaunch_add_file_check(launch/LMS1xx.launch)
+endif()
+ament_package()
